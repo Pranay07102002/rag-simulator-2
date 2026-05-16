@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pranay — Product Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #070b12;
+      --surface: #0d1421;
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.14);
+      --accent: #00e5b5;
+      --accent2: #8b5cf6;
+      --accent3: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --subtle: #1e293b;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .resume {
+      position: relative;
+      z-index: 1;
+      max-width: 1020px;
+      margin: 0 auto;
+      padding: 3.5rem 2.5rem 3rem;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      position: relative;
+      margin-bottom: 3.5rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0;
+      width: 100px; height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2rem;
+    }
+
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--accent);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 20px; height: 1px;
+      background: var(--accent);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(3.2rem, 6vw, 5.8rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      color: #fff;
+    }
+
+    .header-sub {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .role-pill {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dot-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
+
+    .contact-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      align-items: flex-end;
+      padding-top: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: var(--muted);
+      transition: color 0.2s;
+      text-decoration: none;
+    }
+
+    .contact-item:hover { color: var(--text); }
+
+    .ci-icon {
+      width: 14px; height: 14px;
+      stroke: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .header-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 1.5rem;
+    }
+
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.025);
+      transition: all 0.2s;
+      cursor: default;
+    }
+
+    .tag:hover { border-color: var(--border-hover); color: var(--text); }
+    .tag.hi { border-color: rgba(0,229,181,0.35); color: var(--accent); background: rgba(0,229,181,0.06); }
+
+    /* ── LAYOUT ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 0 3.5rem;
+      align-items: start;
+    }
+
+    /* ── SECTIONS ── */
+    .section { margin-bottom: 2.5rem; }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── ABOUT ── */
+    .about-text {
+      font-size: 13.5px;
+      color: #8491a8;
+      line-height: 1.9;
+    }
+
+    .about-text strong {
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    /* ── SKILLS ── */
+    .skill-group { margin-bottom: 1.1rem; }
+
+    .skill-group-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: #3d5066;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 0.55rem;
+    }
+
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+    .skill-tag {
+      font-size: 11.5px;
+      padding: 3px 9px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,0.025);
+      transition: all 0.15s;
+    }
+
+    .skill-tag:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .skill-tag.p { border-color: rgba(139,92,246,0.3); color: #a78bfa; background: rgba(139,92,246,0.07); }
+    .skill-tag.d { border-color: rgba(0,229,181,0.28); color: #5eead4; background: rgba(0,229,181,0.05); }
+    .skill-tag.t { border-color: rgba(245,158,11,0.3); color: #fbbf24; background: rgba(245,158,11,0.05); }
+
+    /* ── DOMAIN GRID ── */
+    .domain-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    .domain-item {
+      font-size: 12px;
+      color: #4d6070;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .domain-item:hover { color: #94a3b8; }
+
+    .domain-item::before {
+      content: '';
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    /* ── EXPERIENCE TIMELINE ── */
+    .exp-item {
+      position: relative;
+      padding-left: 1.6rem;
+      padding-bottom: 2rem;
+    }
+
+    .exp-item::before {
+      content: '';
+      position: absolute;
+      left: 3.5px;
+      top: 10px;
+      width: 1px;
+      height: calc(100% - 10px);
+      background: linear-gradient(to bottom, rgba(0,229,181,0.5), rgba(0,229,181,0.05));
+    }
+
+    .exp-item:last-child::before { display: none; }
+
+    .exp-item::after {
+      content: '';
+      position: absolute;
+      left: -2px; top: 7px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1.5px solid var(--accent);
+      box-shadow: 0 0 10px rgba(0,229,181,0.45);
+    }
+
+    .exp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .exp-company {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #fff;
+    }
+
+    .exp-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--muted);
+      white-space: nowrap;
+      background: rgba(255,255,255,0.04);
+      padding: 2px 10px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      margin-top: 3px;
+    }
+
+    .exp-role {
+      font-size: 12.5px;
+      color: var(--accent);
+      font-weight: 500;
+      margin-bottom: 0.85rem;
+      letter-spacing: 0.01em;
+    }
+
+    .exp-bullets { list-style: none; }
+
+    .exp-bullets li {
+      font-size: 13px;
+      color: #7a8fa5;
+      padding-left: 1.1rem;
+      position: relative;
+      line-height: 1.8;
+      margin-bottom: 0.45rem;
+    }
+
+    .exp-bullets li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .exp-bullets li strong { color: #b8c7d8; font-weight: 500; }
+
+    /* ── PROJECT CARD ── */
+    .project-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.3rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .project-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 50px; height: 2px;
+      background: var(--accent2);
+    }
+
+    .project-card:hover {
+      border-color: rgba(139,92,246,0.35);
+      background: rgba(139,92,246,0.03);
+    }
+
+    .project-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+
+    .project-desc {
+      font-size: 12.5px;
+      color: #566070;
+      line-height: 1.8;
+      margin-bottom: 0.8rem;
+    }
+
+    .tech-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+    .tech-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.28);
+      color: #a78bfa;
+    }
+
+    /* ── EDUCATION ── */
+    .edu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .edu-item:last-child { border-bottom: none; }
+    .edu-degree { font-size: 13.5px; font-weight: 500; color: var(--text); }
+    .edu-inst { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .edu-year { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+
+    /* ── FOOTER ── */
+    .resume-footer {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      color: #1f3040;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .footer-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,229,181,0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(0,229,181,0); }
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff !important; color: #1a1a1a !important; }
+      #bg-canvas { display: none !important; }
+      h1 { color: #1a1a1a !important; font-size: 3.5rem !important; }
+      .exp-company, .project-name { color: #1a1a1a !important; }
+      .about-text, .exp-bullets li, .project-desc, .domain-item, .edu-degree { color: #333 !important; }
+      .section-label, .eyebrow, .exp-role, .footer-status { color: #007a5e !important; }
+      .exp-item::after { box-shadow: none !important; }
+      .tag, .skill-tag, .tech-pill, .exp-date { border-color: #ddd !important; background: #f5f5f5 !important; color: #555 !important; }
+    }
+
+    @media (max-width: 760px) {
+      .main-grid { grid-template-columns: 1fr; gap: 0; }
+      .contact-block { align-items: flex-start; margin-top: 1.5rem; }
+      .header-top { flex-direction: column; }
+      h1 { font-size: 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="resume" id="resume">
+
+    <!-- ── HEADER ── -->
+    <header class="header">
+      <div class="header-top">
+        <div class="name-block">
+          <div class="eyebrow">Product Manager</div>
+          <h1>Pranay</h1>
+          <div class="header-sub">
+            <span class="role-pill">AI Products &amp; Fintech</span>
+            <span class="dot-sep"></span>
+            <span class="role-pill" style="font-family:'JetBrains Mono',monospace; font-size:0.8rem; font-weight:400; color:var(--muted);">Nagpur, India</span>
+          </div>
+          <div class="header-tags">
+            <span class="tag hi">AI Agent Platforms</span>
+            <span class="tag hi">Fintech &amp; Lending</span>
+            <span class="tag">Product Strategy</span>
+            <span class="tag">LLM Products</span>
+            <span class="tag">API Platforms</span>
+            <span class="tag">Chrome Extensions</span>
+          </div>
+        </div>
+
+        <div class="contact-block">
+          <a href="mailto:your@email.com" class="contact-item">
+            <svg class="ci-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            your@email.com
+          </a>
+          <a class="contact-item" href="#">
+            <svg class="ci-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12 19.79 19.79 0 0 1 1.05 3.4 2 2 0 0 1 3 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            +91 XXXXX XXXXX
+          </a>
+          <a href="https://linkedin.com/in/pranay" class="contact-item" target="_blank">
+            <svg class="ci-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+              <rect x="2" y="9" width="4" height="12"/>
+              <circle cx="4" cy="4" r="2"/>
+            </svg>
+            linkedin.com/in/pranay
+          </a>
+          <a href="https://github.com/pranay" class="contact-item" target="_blank">
+            <svg class="ci-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+            </svg>
+            github.com/pranay
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── MAIN GRID ── -->
+    <div class="main-grid">
+
+      <!-- LEFT -->
+      <div>
+        <div class="section">
+          <div class="section-label">About</div>
+          <p class="about-text">
+            PM with a strong command of <strong>AI/LLM products</strong> and <strong>fintech lending</strong>. I combine technical fluency — building Chrome extensions, integrating LLM APIs, and designing agent architectures — with deep domain expertise in credit origination, RBI Digital Lending Guidelines, and the Account Aggregator ecosystem. I think in systems, write in frameworks, and ship in iterations.
+          </p>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Skills</div>
+          <div class="skill-group">
+            <div class="skill-group-label">Product</div>
+            <div class="skill-tags">
+              <span class="skill-tag p">Roadmapping</span>
+              <span class="skill-tag p">PRD Writing</span>
+              <span class="skill-tag p">JTBD</span>
+              <span class="skill-tag p">User Research</span>
+              <span class="skill-tag p">Funnel Analysis</span>
+              <span class="skill-tag p">Metrics Design</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-label">Domain</div>
+            <div class="skill-tags">
+              <span class="skill-tag d">Fintech &amp; Lending</span>
+              <span class="skill-tag d">Account Aggregator</span>
+              <span class="skill-tag d">LLM Platforms</span>
+              <span class="skill-tag d">AI Agents</span>
+              <span class="skill-tag d">RBI Guidelines</span>
+              <span class="skill-tag d">Co-lending</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-label">Technical</div>
+            <div class="skill-tags">
+              <span class="skill-tag t">Chrome MV3</span>
+              <span class="skill-tag t">API Integrations</span>
+              <span class="skill-tag t">Prompt Engineering</span>
+              <span class="skill-tag t">OAuth2</span>
+              <span class="skill-tag t">LLM-agnostic Arch</span>
+              <span class="skill-tag t">Google APIs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Lending Domain</div>
+          <div class="domain-grid">
+            <div class="domain-item">Co-lending</div>
+            <div class="domain-item">NACH</div>
+            <div class="domain-item">FLDG</div>
+            <div class="domain-item">DPD Buckets</div>
+            <div class="domain-item">Loan Origination</div>
+            <div class="domain-item">Retail Credit</div>
+            <div class="domain-item">Credit Underwriting</div>
+            <div class="domain-item">AA Ecosystem</div>
+            <div class="domain-item">Digital Lending</div>
+            <div class="domain-item">API Platforms</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Education</div>
+          <div class="edu-item">
+            <div>
+              <div class="edu-degree">Bachelor of Engineering</div>
+              <div class="edu-inst">Your University · Nagpur</div>
+            </div>
+            <div class="edu-year">20XX</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <div class="section">
+          <div class="section-label">Experience</div>
+          <div>
+
+            <!-- Unify Apps -->
+            <div class="exp-item">
+              <div class="exp-header">
+                <div class="exp-company">Unify Apps</div>
+                <span class="exp-date">2024 — Present</span>
+              </div>
+              <div class="exp-role">Product Manager — AI Agent Platform</div>
+              <ul class="exp-bullets">
+                <li>Designed and shipped conversational AI agents on a <strong>LLM-agnostic architecture</strong>, enabling seamless model switching across OpenAI, Anthropic, and Gemini backends.</li>
+                <li>Led platform product strategy — defining agent capabilities, integration patterns, and API surface area for enterprise customers building on top of the platform.</li>
+                <li>Drove product decisions at the intersection of LLM reliability, latency, and cost optimization, informing model selection and fallback policies.</li>
+                <li>Established <strong>API platform ownership metrics</strong> and health dashboards to track adoption, error rates, p99 latency, and usage growth across customer segments.</li>
+                <li>Built <strong>DayForge</strong> as a side project — a Chrome side-panel productivity tool showcasing deep understanding of developer-facing AI product workflows.</li>
+              </ul>
+            </div>
+
+            <!-- ICICI Bank -->
+            <div class="exp-item">
+              <div class="exp-header">
+                <div class="exp-company">ICICI Bank</div>
+                <span class="exp-date">2022 — 2024</span>
+              </div>
+              <div class="exp-role">Product Manager — Retail Credit (iLens)</div>
+              <ul class="exp-bullets">
+                <li>Owned the <strong>Loan Origination System (iLens)</strong> for retail credit products end-to-end — from requirement scoping with credit and risk stakeholders to delivery and post-launch iteration.</li>
+                <li>Led integration of the <strong>Account Aggregator ecosystem</strong> into the credit origination workflow, reducing manual document collection by enabling consent-based financial data sharing.</li>
+                <li>Translated <strong>RBI Digital Lending Guidelines</strong> into actionable product specs across co-lending, direct lending, and loan
