@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAG Pipeline Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0e;
+    --bg-elevated: #14141a;
+    --bg-card: #1a1a22;
+    --border: #2a2a36;
+    --border-strong: #3a3a4a;
+    --text: #f5f1e8;
+    --text-muted: #8a8a98;
+    --text-dim: #5a5a68;
+    --accent: #d4a843;
+    --accent-soft: rgba(212, 168, 67, 0.12);
+    --accent-glow: rgba(212, 168, 67, 0.35);
+    --teal: #6dd3c4;
+    --teal-soft: rgba(109, 211, 196, 0.1);
+    --rose: #e07a7a;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(212, 168, 67, 0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(109, 211, 196, 0.03) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 80px 80px;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 60px 32px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    margin-bottom: 56px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(40px, 6vw, 68px);
+    line-height: 1;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  h1 em { color: var(--accent); font-style: italic; }
+  .lede {
+    max-width: 640px;
+    font-size: 17px;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  /* CONFIG PANEL */
+  .config {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .config-block {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .config-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .config-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  textarea, input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    resize: vertical;
+    transition: border 0.2s;
+  }
+  textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea { min-height: 140px; }
+  .sample-queries {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 10px;
+  }
+  .sample-queries button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sample-queries button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 56px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 13px;
+    padding: 12px 22px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #e8b948; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+  .step-indicator {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .step-indicator span { color: var(--accent); }
+
+  /* PHASE DIVIDERS */
+  .phase {
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .phase-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin: 48px 0 28px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-header:first-of-type { margin-top: 0; }
+  .phase-num {
+    font-family: var(--serif);
+    font-size: 36px;
+    color: var(--accent);
+    font-style: italic;
+  }
+  .phase-title {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 400;
+  }
+  .phase-tag {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+  }
+
+  /* STAGE CARDS */
+  .stage {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 16px;
+    position: relative;
+    transition: all 0.4s ease;
+    opacity: 0.55;
+  }
+  .stage.active {
+    opacity: 1;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-glow), 0 8px 32px -8px var(--accent-glow);
+  }
+  .stage.done {
+    opacity: 1;
+    border-color: var(--border-strong);
+  }
+  .stage-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .stage-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .stage.active .stage-num {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .stage.done .stage-num {
+    background: var(--bg);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .stage-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  .stage-status {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .stage.active .stage-status { color: var(--accent); }
+  .stage.done .stage-status { color: var(--teal); }
+  .stage-desc {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+    padding-left: 52px;
+    max-width: 760px;
+  }
+  .stage-body {
+    padding-left: 52px;
+    min-height: 20px;
+  }
+  .stage:not(.active):not(.done) .stage-body { display: none; }
+
+  /* DOCUMENT CHIPS */
+  .docs-list { display: grid; gap: 8px; }
+  .doc-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: slideIn 0.4s ease both;
+  }
+  .doc-item .doc-id {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 11px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  /* CHUNK CARDS */
+  .chunks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+  }
+  .chunk {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal);
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    animation: slideIn 0.4s ease both;
+  }
+  .chunk-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    letter-spacing: 0.1em;
+  }
+
+  /* EMBEDDING VISUALIZATION */
+  .embed-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    animation: slideIn 0.4s ease both;
+    align-items: center;
+  }
+  .embed-row:last-child { border-bottom: none; }
+  .embed-text {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    padding-right: 12px;
+  }
+  .embed-text .chunk-id { display: inline; margin-right: 6px; }
+  .vector-bars {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+    height: 32px;
+    align-items: flex-end;
+  }
+  .vector-bars .bar {
+    background: var(--accent);
+    border-radius: 1px;
+    min-height: 2px;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.85;
+  }
+  .vector-numeric {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+    grid-column: 2;
+  }
+
+  /* VECTOR DB */
+  .vector-db {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .vdb-header {
+    display: grid;
+    grid-template-columns: 60px 1fr 200px;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 9px;
+  }
+  .vdb-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 200px;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .vdb-row:last-child { border-bottom: none; }
+  .vdb-id { color: var(--accent); }
+  .vdb-text { color: var(--text-muted); font-family: var(--sans); font-size: 12px; }
+  .vdb-vec { color: var(--teal); font-size: 9.5px; }
+
+  /* QUERY DISPLAY */
+  .query-box {
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-family: var(--serif);
+    font-size: 20px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .query-box::before { content: '"'; color: var(--accent); margin-right: 4px; }
+  .query-box::after { content: '"'; color: var(--accent); margin-left: 4px; }
+
+  /* SIMILARITY RESULTS */
+  .sim-list { display: grid; gap: 8px; }
+  .sim-row {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 50px 1fr 120px 60px;
+    gap: 14px;
+    align-items: center;
+    transition: all 0.3s;
+    animation: slideIn 0.4s ease both;
+  }
+  .sim-row.top-k {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .sim-rank {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .sim-row.top-k .sim-rank { color: var(--accent); font-weight: 600; }
+  .sim-text { font-size: 12.5px; color: var(--text-muted); }
+  .sim-row.top-k .sim-text { color: var(--text); }
+  .sim-bar-wrap {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .sim-bar {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sim-score {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-align: right;
+  }
+  .sim-legend {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* PROMPT INJECTION */
+  .prompt-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+  }
+  .prompt-box .prompt-label {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .prompt-box .prompt-injected {
+    color: var(--teal);
+    background: var(--teal-soft);
+    padding: 2px 4px;
+    border-radius: 2px;
+  }
+  .prompt-box .prompt-query {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* GENERATION OUTPUT */
+  .answer-box {
+    background: linear-gradient(180deg, var(--accent-soft) 0%, transparent 100%);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 24px 28px;
+    position: relative;
+  }
+  .answer-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .answer-text {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .answer-meta {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+  .answer-disclaimer {
+    margin-top: 14px;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* ANIMATIONS */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 1px var(--accent-glow), 0 8px 32px -8px var(--accent-glow); }
+    50% { box-shadow: 0 0 0 2px var(--accent-glow), 0 12px 40px -8px var(--accent-glow); }
+  }
+  .stage.active { animation: pulse 2s ease-in-out infinite; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 760px) {
+    .config { grid-template-columns: 1fr; }
+    .stage-desc, .stage-body { padding-left: 0; margin-top: 16px; }
+    .embed-row { grid-template-columns: 1fr; }
+    .sim-row { grid-template-columns: 30px 1fr 60px; }
+    .sim-row .sim-bar-wrap { display: none; }
+    .vdb-header, .vdb-row { grid-template-columns: 50px 1fr; }
+    .vdb-vec { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="eyebrow">An interactive teaching tool</div>
+    <h1>The RAG Pipeline,<br>step by <em>step</em>.</h1>
+    <p class="lede">
+      Retrieval Augmented Generation in nine stages — from raw documents to a grounded answer.
+      Edit the knowledge base, change the query, and watch the math: chunking, embeddings, cosine similarity, top-k retrieval, prompt injection, and generation.
+    </p>
+  </header>
+
+  <!-- CONFIG PANEL -->
+  <div class="config">
+    <div class="config-block">
+      <div class="config-label">Knowledge Base — one document per line</div>
+      <textarea id="kb-input">Employees are entitled to 18 days of paid annual leave per calendar year, accrued on a pro-rata basis from the date of joining.
+Sick leave requires a medical certificate if absence exceeds two consecutive working days. Up to 10 sick days are paid per year.
+Maternity leave is 26 weeks fully paid as per the Maternity Benefit Act, available to employees with at least 80 days of service.
+Paternity leave is 10 working days, to be availed within six months of the child's birth.
+Unused annual leave can be carried forward to the next year, with a maximum balance cap of 30 days.
+Compensatory off must be claimed within 60 days of the worked weekend or public holiday, otherwise it lapses.
+Employees on probation receive pro-rated leave and are not eligible to carry forward unused balance until confirmation.
+Leave requests must be submitted via the HR portal at least three working days in advance, except for sick leave.</textarea>
+    </div>
+    <div class="config-block">
+      <div class="config-label">User Query</div>
+      <input type="text" id="query-input" value="Can I carry forward my unused leaves to next year?" />
+      <div class="sample-queries">
+        <button onclick="setQuery('How many days of paid leave do I get?')">paid leave days</button>
+        <button onclick="setQuery('What happens to sick leave without a certificate?')">sick leave certificate</button>
+        <button onclick="setQuery('How long is maternity leave?')">maternity leave</button>
+        <button onclick="setQuery('When does my comp-off expire?')">comp-off expiry</button>
+        <button onclick="setQuery('What leave do new joiners on probation get?')">probation leave</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="btn btn-primary" id="run-all">▶ Run Full Pipeline</button>
+    <button class="btn btn-secondary" id="next-step">Next Step →</button>
+    <button class="btn btn-secondary" id="reset">↺ Reset</button>
+    <div class="step-indicator">Stage <span id="step-counter">0</span> / 9</div>
+  </div>
+
+  <!-- PHASE 1: INDEXING -->
+  <div class="phase-header">
+    <span class="phase-num">I.</span>
+    <span class="phase-title">Indexing</span>
+    <span class="phase-tag">Offline · runs once per document</span>
+  </div>
+
+  <!-- STAGE 1 -->
+  <div class="stage" data-stage="1">
+    <div class="stage-head">
+      <div class="stage-num">1</div>
+      <div class="stage-title">Load documents</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      Raw source material is loaded into the pipeline — PDFs, wikis, HR docs, customer tickets, anything textual. In production this is the ingestion layer.
+    </div>
+    <div class="stage-body" id="stage-1-body"></div>
+  </div>
+
+  <!-- STAGE 2 -->
+  <div class="stage" data-stage="2">
+    <div class="stage-head">
+      <div class="stage-num">2</div>
+      <div class="stage-title">Chunk</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      Long documents are split into smaller, semantically-coherent chunks. Chunk size and overlap are tuning parameters — too big and similarity gets noisy, too small and context is lost. Here each line is one chunk.
+    </div>
+    <div class="stage-body" id="stage-2-body"></div>
+  </div>
+
+  <!-- STAGE 3 -->
+  <div class="stage" data-stage="3">
+    <div class="stage-head">
+      <div class="stage-num">3</div>
+      <div class="stage-title">Embed chunks</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      Each chunk is passed through an embedding model and converted into a dense vector — typically 768 to 3,072 dimensions. We use 8 dimensions here for visibility. Geometrically close vectors = semantically close meaning.
+    </div>
+    <div class="stage-body" id="stage-3-body"></div>
+  </div>
+
+  <!-- STAGE 4 -->
+  <div class="stage" data-stage="4">
+    <div class="stage-head">
+      <div class="stage-num">4</div>
+      <div class="stage-title">Store in vector database</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      Vectors are persisted to a specialized store — Pinecone, Weaviate, pgvector, Chroma — indexed for fast nearest-neighbour search. This is where the indexing phase ends.
+    </div>
+    <div class="stage-body" id="stage-4-body"></div>
+  </div>
+
+  <!-- PHASE 2: RETRIEVAL + GENERATION -->
+  <div class="phase-header">
+    <span class="phase-num">II.</span>
+    <span class="phase-title">Retrieval &amp; Generation</span>
+    <span class="phase-tag">Inference · runs on every query</span>
+  </div>
+
+  <!-- STAGE 5 -->
+  <div class="stage" data-stage="5">
+    <div class="stage-head">
+      <div class="stage-num">5</div>
+      <div class="stage-title">Receive user query</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      A user asks a question in natural language. Nothing happens to the documents at this point — the index is already built.
+    </div>
+    <div class="stage-body" id="stage-5-body"></div>
+  </div>
+
+  <!-- STAGE 6 -->
+  <div class="stage" data-stage="6">
+    <div class="stage-head">
+      <div class="stage-num">6</div>
+      <div class="stage-title">Embed the query</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      The query goes through the <em>same</em> embedding model used for chunks — this is essential. If the encoders differ, the vector spaces don't align and similarity is meaningless.
+    </div>
+    <div class="stage-body" id="stage-6-body"></div>
+  </div>
+
+  <!-- STAGE 7 -->
+  <div class="stage" data-stage="7">
+    <div class="stage-head">
+      <div class="stage-num">7</div>
+      <div class="stage-title">Similarity search</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      Cosine similarity is computed between the query vector and every chunk vector. Top-k results (k=3 here) are selected. This is the "Retrieval" in RAG.
+    </div>
+    <div class="stage-body" id="stage-7-body"></div>
+  </div>
+
+  <!-- STAGE 8 -->
+  <div class="stage" data-stage="8">
+    <div class="stage-head">
+      <div class="stage-num">8</div>
+      <div class="stage-title">Inject context into prompt</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      Retrieved chunks are slotted into a prompt template alongside the user's question. This grounded prompt is what gets sent to the LLM — not just the bare query.
+    </div>
+    <div class="stage-body" id="stage-8-body"></div>
+  </div>
+
+  <!-- STAGE 9 -->
+  <div class="stage" data-stage="9">
+    <div class="stage-head">
+      <div class="stage-num">9</div>
+      <div class="stage-title">Generate the answer</div>
+      <div class="stage-status">pending</div>
+    </div>
+    <div class="stage-desc">
+      The LLM reads the grounded prompt and produces a response — drawing primarily from the injected context rather than its parametric memory. This is the "Generation" in RAG.
+    </div>
+    <div class="stage-body" id="stage-9-body"></div>
+  </div>
+
+  <div class="footer">RAG SIMULATOR · BUILT FOR PRANAY · INDEXING ⟶ RETRIEVAL ⟶ GENERATION</div>
+</div>
+
+<script>
+/* =========================================================================
+   RAG PIPELINE SIMULATOR
+   Pure client-side. No external APIs. Embeddings are deterministic
+   pseudo-embeddings derived from concept-keyword overlap — not real ML,
+   but mathematically honest about cosine similarity and top-k retrieval.
+   ========================================================================= */
+
+// ---- CONCEPT DIMENSIONS (the 8 "axes" of our embedding space) ----
+const CONCEPT_DIMS = [
+  { name: 'leave',       kws: ['leave', 'leaves', 'vacation', 'pto', 'holiday', 'time off', 'off'] },
+  { name: 'medical',     kws: ['sick', 'medical', 'illness', 'doctor', 'certificate', 'health'] },
+  { name: 'parental',    kws: ['maternity', 'paternity', 'parental', 'pregnancy', 'baby', 'child', 'birth'] },
+  { name: 'duration',    kws: ['days', 'weeks', 'months', 'year', 'years', 'period', 'long', 'how many', 'how long'] },
+  { name: 'eligibility', kws: ['eligible', 'entitled', 'probation', 'permanent', 'joiner', 'new', 'employee', 'get'] },
+  { name: 'accrual',     kws: ['carry', 'forward', 'accumulate', 'unused', 'balance', 'next year', 'cap'] },
+  { name: 'comp_off',    kws: ['comp', 'compensatory', 'weekend', 'overtime', 'lapse', 'expire', 'expiry'] },
+  { name: 'policy',      kws: ['policy', 'rule', 'approval', 'request', 'apply', 'submit', 'portal', 'advance'] },
+];
+
+// ---- EMBEDDING: count keyword matches per dim → L2-normalize ----
+function embed(text) {
+  const t = text.toLowerCase();
+  const raw = CONCEPT_DIMS.map(dim => {
+    let count = 0;
+    dim.kws.forEach(kw => {
+      const re = new RegExp('\\b' + kw.replace(/\s+/g, '\\s+') + '\\b', 'g');
+      const matches = t.match(re);
+      if (matches) count += matches.length;
+    });
+    return count;
+  });
+  // L2 normalize so cosine = dot product
+  const mag = Math.sqrt(raw.reduce((s, v) => s + v * v, 0)) || 1;
+  return raw.map(v => v / mag);
+}
+
+function cosineSim(a, b) {
+  let dot = 0;
+  for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
+  return dot; // both are L2-normalized
+}
+
+function fmtVec(v) {
+  return '[' + v.map(x => x.toFixed(2)).join(', ') + ']';
+}
+
+// ---- STATE ----
+let state = {
+  step: 0,
+  docs: [],
+  chunks: [],
+  embeddings: [],
+  query: '',
+  queryVec: null,
+  scored: [],
+  topK: [],
+  running: false,
+};
+
+const K = 3; // top-k
+
+// ---- HELPERS ----
+function setQuery(q) {
+  document.getElementById('query-input').value = q;
+}
+
+function readInputs() {
+  const kb = document.getElementById('kb-input').value
+    .split('\n').map(s => s.trim()).filter(Boolean);
+  const q = document.getElementById('query-input').value.trim();
+  return { kb, q };
+}
+
+function updateStageVisual(stage, status) {
+  const el = document.querySelector(`.stage[data-stage="${stage}"]`);
+  if (!el) return;
+  el.classList.remove('active', 'done');
+  if (status === 'active') el.classList.add('active');
+  if (status === 'done') el.classList.add('done');
+  el.querySelector('.stage-status').textContent = status;
+}
+
+function setCounter(n) {
+  document.getElementById('step-counter').textContent = n;
+}
+
+function clearAllStages() {
+  for (let i = 1; i <= 9; i++) {
+    const el = document.querySelector(`.stage[data-stage="${i}"]`);
+    el.classList.remove('active', 'done');
+    el.querySelector('.stage-status').textContent = 'pending';
+    document.getElementById(`stage-${i}-body`).innerHTML = '';
+  }
+}
+
+// ---- STAGE RENDERERS ----
+function renderStage1() {
+  const { kb } = readInputs();
+  state.docs = kb;
+  const html = `<div class="docs-list">` +
+    kb.map((d, i) => `
+      <div class="doc-item" style="animation-delay: ${i * 60}ms">
+        <span class="doc-id">DOC ${String(i + 1).padStart(2, '0')}</span>
+        <span>${d}</span>
+      </div>`).join('') +
+    `</div>`;
+  document.getElementById('stage-1-body').innerHTML = html;
+}
+
+function renderStage2() {
+  // each doc is one chunk in this simulator (line-based chunking)
+  state.chunks = state.docs.map((d, i) => ({ id: 'C' + String(i + 1).padStart(2, '0'), text: d }));
+  const html = `<div class="chunks-grid">` +
+    state.chunks.map((c, i) => `
+      <div class="chunk" style="animation-delay: ${i * 50}ms">
+        <div class="chunk-id">${c.id}</div>
+        <div>${c.text}</div>
+      </div>`).join('') +
+    `</div>`;
+  document.getElementById('stage-2-body').innerHTML = html;
+}
+
+function renderStage3() {
+  state.embeddings = state.chunks.map(c => ({ ...c, vec: embed(c.text) }));
+  const html = state.embeddings.map((c, i) => {
+    const maxV = Math.max(...c.vec, 0.001);
+    const bars = c.vec.map(v =>
+      `<div class="bar" style="height: ${Math.max(2, (v / maxV) * 100)}%"></div>`
+    ).join('');
+    return `
+      <div class="embed-row" style="animation-delay: ${i * 70}ms">
+        <div class="embed-text">
+          <span class="chunk-id" style="color: var(--accent); font-family: var(--mono); font-size: 11px;">${c.id}</span>
+          ${c.text.slice(0, 90)}${c.text.length > 90 ? '…' : ''}
+        </div>
+        <div>
+          <div class="vector-bars">${bars}</div>
+          <div class="vector-numeric">${fmtVec(c.vec)}</div>
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('stage-3-body').innerHTML = html;
+}
+
+function renderStage4() {
+  const html = `
+    <div class="vector-db">
+      <div class="vdb-header">
+        <div>ID</div>
+        <div>Source chunk (excerpt)</div>
+        <div>Vector (8d)</div>
+      </div>
+      ${state.embeddings.map(c => `
+        <div class="vdb-row">
+          <div class="vdb-id">${c.id}</div>
+          <div class="vdb-text">${c.text.slice(0, 65)}${c.text.length > 65 ? '…' : ''}</div>
+          <div class="vdb-vec">${fmtVec(c.vec)}</div>
+        </div>`).join('')}
+    </div>
+    <div style="margin-top: 14px; font-family: var(--mono); font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em;">
+      ▸ ${state.embeddings.length} vectors indexed · ready for nearest-neighbour search
+    </div>`;
+  document.getElementById('stage-4-body').innerHTML = html;
+}
+
+function renderStage5() {
+  const { q } = readInputs();
+  state.query = q;
+  document.getElementById('stage-5-body').innerHTML =
+    `<div class="query-box">${q}</div>`;
+}
+
+function renderStage6() {
+  state.queryVec = embed(state.query);
+  const maxV = Math.max(...state.queryVec, 0.001);
+  const bars = state.queryVec.map(v =>
+    `<div class="bar" style="height: ${Math.max(2, (v / maxV) * 100)}%"></div>`
+  ).join('');
+  const dimLabels = CONCEPT_DIMS.map(d => d.name).join(' · ');
+  document.getElementById('stage-6-body').innerHTML = `
+    <div class="embed-row" style="grid-template-columns: 1fr 2fr;">
+      <div class="embed-text" style="font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--text);">
+        "${state.query}"
+      </div>
+      <div>
+        <div class="vector-bars">${bars}</div>
+        <div class="vector-numeric">${fmtVec(state.queryVec)}</div>
+        <div style="font-family: var(--mono); font-size: 9px; color: var(--text-dim); margin-top: 8px; letter-spacing: 0.08em;">
+          dims: ${dimLabels}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderStage7() {
+  state.scored = state.embeddings.map(c => ({
+    ...c,
+    score: cosineSim(state.queryVec, c.vec)
+  })).sort((a, b) => b.score - a.score);
+  state.topK = state.scored.slice(0, K);
+
+  const html = `
+    <div class="sim-legend">All chunks ranked by cosine similarity ↓ · top-${K} highlighted</div>
+    <div class="sim-list">
+      ${state.scored.map((c, i) => {
+        const isTop = i < K;
+        const pct = Math.max(0, c.score * 100).toFixed(1);
+        return `
+          <div class="sim-row ${isTop ? 'top-k' : ''}" style="animation-delay: ${i * 50}ms">
+            <div class="sim-rank">#${String(i + 1).padStart(2, '0')} · ${c.id}</div>
+            <div class="sim-text">${c.text.slice(0, 80)}${c.text.length > 80 ? '…' : ''}</div>
+            <div class="sim-bar-wrap"><div class="sim-bar" style="width: ${Math.max(2, c.score * 100)}%"></div></div>
+            <div class="sim-score">${c.score.toFixed(3)}</div>
+          </div>`;
+      }).join('')}
+    </div>`;
+  document.getElementById('stage-7-body').innerHTML = html;
+}
+
+function renderStage8() {
+  const contextBlock = state.topK
+    .map((c, i) => `  [${i + 1}] ${c.text}`)
+    .join('\n');
+  const prompt =
+`<span class="prompt-label">SYSTEM:</span>
+You are a helpful assistant. Answer the user's question using ONLY
+the context provided below. If the answer is not in the context,
+say you don't know.
+
+<span class="prompt-label">CONTEXT:</span>
+<span class="prompt-injected">${contextBlock}</span>
+
+<span class="prompt-label">USER QUESTION:</span>
+<span class="prompt-query">${state.query}</span>
+
+<span class="prompt-label">ANSWER:</span>`;
+  document.getElementById('stage-8-body').innerHTML =
+    `<div class="prompt-box">${prompt}</div>`;
+}
+
+function renderStage9() {
+  // Simulate a grounded answer by stitching together the top chunks
+  const top = state.topK;
+  const primary = top[0];
+  const supporting = top.slice(1);
+
+  // Heuristic answer composition — honest about what a real LLM would do
+  let answer;
+  if (!primary || primary.score < 0.05) {
+    answer = `Based on the retrieved context, I cannot find a clear answer to your question. The knowledge base does not appear to cover this topic.`;
+  } else {
+    answer = primary.text;
+    if (supporting.length && supporting[0].score > 0.1) {
+      answer += ` Additionally, ${supporting[0].text.charAt(0).toLowerCase() + supporting[0].text.slice(1)}`;
+    }
+  }
+
+  const sources = top.map(c => c.id).join(', ');
+  document.getElementById('stage-9-body').innerHTML = `
+    <div class="answer-box">
+      <div class="answer-label">⬢ Grounded answer</div>
+      <div class="answer-text">${answer}</div>
+      <div class="answer-meta">SOURCES: ${sources} · TEMPERATURE: 0 · GROUNDED: TRUE</div>
+    </div>
+    <div class="answer-disclaimer">
+      ※ In a real RAG system, an actual LLM (GPT-4, Claude, Llama) would generate this answer from the grounded prompt above. This simulator stitches the top chunk verbatim to keep the math transparent and prove the retrieval did the heavy lifting.
+    </div>`;
+}
+
+const renderers = [
+  null, renderStage1, renderStage2, renderStage3, renderStage4,
+  renderStage5, renderStage6, renderStage7, renderStage8, renderStage9
+];
+
+// ---- STEP CONTROLLER ----
+async function advance() {
+  if (state.step >= 9) return;
+  state.step += 1;
+  setCounter(state.step);
+  // mark previous as done
+  if (state.step > 1) updateStageVisual(state.step - 1, 'done');
+  // render and activate current
+  updateStageVisual(state.step, 'active');
+  renderers[state.step]();
+  // scroll into view
+  const el = document.querySelector(`.stage[data-stage="${state.step}"]`);
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function runAll() {
+  if (state.running) return;
+  state.running = true;
+  reset();
+  await new Promise(r => setTimeout(r, 200));
+  for (let i = 0; i < 9; i++) {
+    await advance();
+    await new Promise(r => setTimeout(r, 1100));
+  }
+  // mark final stage as done too
+  updateStageVisual(9, 'done');
+  state.running = false;
+}
+
+function reset() {
+  state = { step: 0, docs: [], chunks: [], embeddings: [], query: '', queryVec: null, scored: [], topK: [], running: false };
+  setCounter(0);
+  clearAllStages();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---- EVENT WIRING ----
+document.getElementById('run-all').addEventListener('click', runAll);
+document.getElementById('next-step').addEventListener('click', advance);
+document.getElementById('reset').addEventListener('click', reset);
+</script>
+</body>
+</html>
